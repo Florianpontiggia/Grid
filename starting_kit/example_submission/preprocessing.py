@@ -12,22 +12,24 @@ class Preprocessing(object):
         #Initialisation d'un delta arbitraire pour la comparaison d'états
 
         self.delta = 0.1
-
+        
+        #Initialisation des tableaux d'actions, de recompenses et d'états
+        
         actions = []
         rewards = []
         states = []
 
         #On charge dans trois tableaux différents, les fichiers d'actions, états et rewards qui sont sous la forme de chaines de string
 
-        with open(actions_file) as csv_file:
+        with open(actions_file) as csv_file:                    #Ouverture du fichier contenant les actions
             csv_reader = csv.reader(csv_file, delimiter=',')
             for row in csv_reader:
                 actions.append(row)
-        with open(rewards_file) as csv_file:
+        with open(rewards_file) as csv_file:                    #Ouverture du fichier contenant les recompenses
             csv_reader = csv.reader(csv_file, delimiter = ',')
             for row in csv_reader:
                 rewards.append(row[0])
-        with open(states_file) as csv_file:
+        with open(states_file) as csv_file:                     #Ouverture du fichier contenant les états
             csv_reader= csv.reader(csv_file, delimiter=',')
             for row in csv_reader:
                 states.append(row)
@@ -53,8 +55,8 @@ class Preprocessing(object):
 
     def reduce_actions(self):
         action_set = dict()
-        for i in range(len(self.actions)):
-            action_set[self.compute_action_key(self.actions[i])] = self.actions[i]
+        for i in range(len(self.actions)):                                          #Parcourt le tableau d'action
+            action_set[self.compute_action_key(self.actions[i])] = self.actions[i]  #Regarde si une action a déjà été répertorier pour n'en garder qu'une seul
         return action_set
 
     """
@@ -63,8 +65,8 @@ class Preprocessing(object):
 
     def compute_action_key(self, array):
         key =""
-        for i in range(len(array)):
-            key = key + str(array[i])
+        for i in range(len(array)):             #Parcour du tableau d'action
+            key = key + str(array[i])           #Association d'une clé à chacunes des actions
         return key
 
     """
@@ -72,29 +74,29 @@ class Preprocessing(object):
     """
 
     def compare_states(self, state_ref, state_check):
-        assert len(state_ref) == len(state_check)
-        newState = np.zeros(len(state_ref))
+        assert len(state_ref) == len(state_check)               #Test de condition pour voir si state_ref = state_check
+        newState = np.zeros(len(state_ref))                     #Creation d'un tableau Newstate, de la meme taille que le tableau d'état, remplit de 0
         for i in range(len(state_ref)):
-            newState[i] = state_ref[i] - state_check[i]
-        return (np.linalg.norm(newState) <= self.delta)
+            newState[i] = state_ref[i] - state_check[i]         #Remplis le tableau avec la difference entre l'état de ref et celui que l'on test
+        return (np.linalg.norm(newState) <= self.delta)         #Compare le tableau au seuil arbitraire defini au préalable
 
     """
     Détermine une première version de politique à partir des données
     """
 
     def compute_policy(self):
-        policy = [dict()]
-        new_states = [self.states[0]]
-        new_actions = [[self.actions[0]]]
-        new_rewards = [[self.rewards[0]]]
+        policy = [dict()]                               #Creation un tableau contenant un dictionnaire 
+        new_states = [self.states[0]]                   #Creation d'un nouveau tableau d'états 
+        new_actions = [[self.actions[0]]]               #Creation d'un nouveau tableau d'actions 
+        new_rewards = [[self.rewards[0]]]               #Creation d'un nouveau tableau de recompenses
         for i in range(1,len(self.states)):
-            exists = False
+            exists = False                              #Declaration/initialisation d'une variable de test d'existance 
             for j in range(len(new_states)):
                 if not(exists):
-                    if self.compare_states(new_states[j],self.states[i]):
-                       new_actions[j].append(self.actions[i])
-                       new_rewards[j].append(self.rewards[i])
-                       exists = True
+                    if self.compare_states(new_states[j],self.states[i]):   #Si le difference entre new_states et self.states est plus petite que le seuil arbitraire, rentre dans la boucle 
+                       new_actions[j].append(self.actions[i])               #Ajoute l'action dans le nouveau tableau
+                       new_rewards[j].append(self.rewards[i])               #Ajoute la récompense dans le nouveau tableau
+                       exists = True                                        #Passe la variable à true pour eviter de retraiter un meme élément une seconde fois
             if not(exists):
                 new_states.append(self.states[i])
                 new_actions.append([self.actions[i]])
